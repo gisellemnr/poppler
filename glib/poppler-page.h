@@ -109,6 +109,9 @@ GList                 *poppler_page_get_text_attributes  (PopplerPage        *pa
 void                   poppler_page_free_text_attributes (GList              *list);
 GList *        poppler_page_get_text_attributes_for_area (PopplerPage        *page,
                                                           PopplerRectangle   *area);
+GArray         *poppler_page_get_quadrilaterals_for_area (PopplerPage        *page,
+		                                          PopplerRectangle   *area,
+							  PopplerRectangle   *bbox);
 
 /* A rectangle on a page, with coordinates in PDF points. */
 #define POPPLER_TYPE_RECTANGLE             (poppler_rectangle_get_type ())

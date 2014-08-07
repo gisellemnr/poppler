@@ -2423,3 +2423,85 @@ poppler_page_get_text_attributes_for_area (PopplerPage      *page,
 
   return g_list_reverse(attributes);
 }
+
+/**
+ * poppler_page_get_quadrilaterals_for_area:
+ * @page: A #PopplerPage
+ * @area: a #PopplerRectangle
+ * @bbox: a #PopplerRectangle
+ *
+ * Obtains the quadrilaterals of the text in @area as a #GArray of #PopplerQuadrilateral.
+ * If @area does not encompasses the full width of the text, the quadrilaterals
+ * will nevertheless contain the text in the full width.
+ * Sets @bbox to the rectangle which is the bounding box of all quadrilaterals,
+ * if not NULL.
+ *
+ * Return value: (element-type PopplerQuadrilateral) (transfer full): A #GArray of #PopplerQuadrilateral
+ *
+ * Since: 0.28
+ **/
+GArray *
+poppler_page_get_quadrilaterals_for_area (PopplerPage      *page,
+					  PopplerRectangle *area,
+					  PopplerRectangle *bbox)
+{
+  GList  *l_rects;
+  GList  *list;
+  guint   n_rects;
+  guint   i;
+  GArray *quads_array;
+  gdouble height;
+  gdouble max_x;
+  gdouble max_y;
+  gdouble min_x;
+  gdouble min_y;
+
+  if (bbox) {
+    bbox->x1 = G_MAXDOUBLE;
+    bbox->y1 = G_MAXDOUBLE;
+    bbox->x2 = G_MINDOUBLE;
+    bbox->y2 = G_MINDOUBLE;
+  }
+
+  poppler_page_get_size (page, NULL, &height);
+
+  l_rects = poppler_page_get_selection_region (page, 1.0, POPPLER_SELECTION_GLYPH, area);
+  n_rects = g_list_length (l_rects);
+
+  quads_array = g_array_sized_new (TRUE, TRUE,
+                                   sizeof (PopplerQuadrilateral),
+                                   n_rects);
+  g_array_set_size (quads_array, n_rects);
+
+  for (list = l_rects, i = 0; i < n_rects; i++, list = list->next) {
+    PopplerRectangle     *r;
+    PopplerQuadrilateral *quad;
+
+    quad = &g_array_index (quads_array, PopplerQuadrilateral, i);
+    r = (PopplerRectangle *) list->data;
+    quad->p1.x = r->x1;
+    quad->p1.y = height - r->y2;
+    quad->p2.x = r->x2;
+    quad->p2.y = height - r->y2;
+    quad->p3.x = r->x1;
+    quad->p3.y = height - r->y1;
+    quad->p4.x = r->x2;
+    quad->p4.y = height - r->y1;
+    g_slice_free (PopplerRectangle, r);
+
+    if (bbox) {
+      max_x = MAX (quad->p1.x, MAX (quad->p2.x, MAX (quad->p3.x, quad->p4.x)));
+      max_y = MAX (quad->p1.y, MAX (quad->p2.y, MAX (quad->p3.y, quad->p4.y)));
+      min_x = MIN (quad->p1.x, MIN (quad->p2.x, MIN (quad->p3.x, quad->p4.x)));
+      min_y = MIN (quad->p1.y, MIN (quad->p2.y, MIN (quad->p3.y, quad->p4.y)));
+
+      if (min_x < bbox->x1) bbox->x1 = min_x;
+      if (min_y < bbox->y1) bbox->y1 = min_y;
+      if (max_x > bbox->x2) bbox->x2 = max_x;
+      if (max_y > bbox->y2) bbox->y2 = max_y;
+    }
+  }
+  g_list_free (l_rects);
+
+  return quads_array;
+}
