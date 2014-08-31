@@ -1005,78 +1005,19 @@ pgd_annots_finish_add_annot (PgdAnnotsDemo *demo)
 static void
 pgd_annots_update_selected_text (PgdAnnotsDemo *demo)
 {
-    PopplerRectangle      doc_area, *rects = NULL, *r = NULL;
-    gdouble               width, height;
-    GArray               *quads_array = NULL;
-    guint                 n_rects;
-    gint                  i, lines = 0;
-    GList                 *l_rects = NULL, *list;
-
-    poppler_page_get_size (demo->page, &width, &height);
+    PopplerRectangle      doc_area;
+    GArray               *quads_array;
 
     doc_area.x1 = demo->start.x;
     doc_area.y1 = demo->start.y;
     doc_area.x2 = demo->stop.x;
     doc_area.y2 = demo->stop.y;
 
-    if (! poppler_page_get_text_layout_for_area (demo->page, &doc_area,
-                                                 &rects, &n_rects))
-        return;
+    quads_array = poppler_page_get_quadrilaterals_for_area (demo->page, &doc_area, NULL);
 
-    r = g_slice_new (PopplerRectangle);
-    r->x1 = G_MAXDOUBLE; r->y1 = G_MAXDOUBLE;
-    r->x2 = G_MINDOUBLE; r->y2 = G_MINDOUBLE;
-
-    for (i = 0; i < n_rects; i++) {
-        /* Check if the rectangle belongs to the same line.
-           On a new line, start a new target rectangle.
-           On the same line, make an union of rectangles at
-           the same line */
-        if (ABS(r->y2 - rects[i].y2) > 0.0001) {
-            if (i > 0)
-                l_rects = g_list_append (l_rects, r);
-            r = g_slice_new (PopplerRectangle);
-            r->x1 = rects[i].x1;
-            r->y1 = rects[i].y1;
-            r->x2 = rects[i].x2;
-            r->y2 = rects[i].y2;
-            lines++;
-        } else {
-            r->x1 = MIN(r->x1, rects[i].x1);
-            r->y1 = MIN(r->y1, rects[i].y1);
-            r->x2 = MAX(r->x2, rects[i].x2);
-            r->y2 = MAX(r->y2, rects[i].y2);
-        }
-    }
-
-    l_rects = g_list_append (l_rects, r);
-    l_rects = g_list_reverse (l_rects);
-
-    quads_array = g_array_sized_new (TRUE, TRUE,
-                                     sizeof (PopplerQuadrilateral),
-                                     lines);
-    g_array_set_size (quads_array, lines);
-
-    for (list = l_rects, i = 0; list; list = list->next, i++) {
-        PopplerQuadrilateral *quad;
-
-        quad = &g_array_index (quads_array, PopplerQuadrilateral, i);
-        r = (PopplerRectangle *)list->data;
-        quad->p1.x = r->x1;
-        quad->p1.y = height - r->y1;
-        quad->p2.x = r->x2;
-        quad->p2.y = height - r->y1;
-        quad->p3.x = r->x1;
-        quad->p3.y = height - r->y2;
-        quad->p4.x = r->x2;
-        quad->p4.y = height - r->y2;
-        g_slice_free (PopplerRectangle, r);
-    }
-
-    poppler_annot_text_markup_set_quadrilaterals (POPPLER_ANNOT_TEXT_MARKUP (demo->active_annot), quads_array);
+    if (quads_array->len > 0)
+	    poppler_annot_text_markup_set_quadrilaterals (POPPLER_ANNOT_TEXT_MARKUP (demo->active_annot), quads_array);
     g_array_free (quads_array, TRUE);
-    g_free (rects);
-    g_list_free (l_rects);
 }
 
 /* Render area */
