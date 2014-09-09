@@ -386,6 +386,40 @@ poppler_page_render (PopplerPage *page,
 }
 
 /**
+ * poppler_page_render_annot:
+ * @page: the page in which the annot is
+ * @cairo: cairo context to render to
+ * @poppler_annot: annot to render
+ *
+ * Render the annot (which belongs to page) to the given cairo context.
+ **/
+void
+poppler_page_render_annot (PopplerPage *page,
+			   PopplerAnnot *poppler_annot,
+			   cairo_t *cairo)
+{
+  CairoOutputDev *output_dev;
+
+  g_return_if_fail (POPPLER_IS_PAGE (page));
+
+  output_dev = page->document->output_dev;
+  output_dev->setCairo (cairo);
+
+  /* NOTE: instead of passing -1 we should/could use cairo_clip_extents()
+   * to get a bounding box */
+  cairo_save (cairo);
+  page->page->displayAnnot(poppler_annot->annot, output_dev,
+                           72.0, 72.0, 0,
+                           gFalse, /* useMediaBox */
+                           gTrue, /* Crop */
+                           -1, -1,
+                           -1, -1,
+                           NULL, NULL);
+  cairo_restore (cairo);
+  output_dev->setCairo (NULL);
+}
+
+/**
  * poppler_page_render_for_printing_with_options:
  * @page: the page to render from
  * @cairo: cairo context to render to

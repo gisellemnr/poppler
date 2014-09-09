@@ -34,6 +34,9 @@ G_BEGIN_DECLS
 
 GType      	       poppler_page_get_type             (void) G_GNUC_CONST;
 
+void                   poppler_page_render_annot         (PopplerPage        *page,
+							  PopplerAnnot       *poppler_annot,
+							  cairo_t            *cairo);
 void                   poppler_page_render               (PopplerPage        *page,
 							  cairo_t            *cairo);
 void                   poppler_page_render_for_printing  (PopplerPage        *page,
