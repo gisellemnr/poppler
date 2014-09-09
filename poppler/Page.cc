@@ -616,6 +616,36 @@ void Page::displaySlice(OutputDev *out, double hDPI, double vDPI,
   }
 }
 
+void Page::displayAnnot(Annot *annot, OutputDev *out, double hDPI, double vDPI,
+			int rotate, GBool useMediaBox, GBool crop,
+			int sliceX, int sliceY, int sliceW, int sliceH,
+			GBool (*abortCheckCbk)(void *data),
+			void *abortCheckCbkData,
+                        GBool copyXRef) {
+  Gfx *gfx;
+  Object obj;
+
+  pageLocker();
+  XRef *localXRef = (copyXRef) ? xref->copy() : xref;
+  if (copyXRef) {
+    replaceXRef(localXRef);
+  }
+
+  gfx = createGfx(out, hDPI, vDPI, rotate, useMediaBox, crop,
+		  sliceX, sliceY, sliceW, sliceH,
+		  gFalse,
+		  abortCheckCbk, abortCheckCbkData, localXRef);
+
+  annot->draw(gfx, gFalse);
+  out->dump();
+
+  delete gfx;
+  if (copyXRef) {
+    replaceXRef(doc->getXRef());
+    delete localXRef;
+  }
+}
+
 void Page::display(Gfx *gfx) {
   Object obj;
 

@@ -247,6 +247,12 @@ public:
                     GBool (*annotDisplayDecideCbk)(Annot *annot, void *user_data) = NULL,
                     void *annotDisplayDecideCbkData = NULL,
                     GBool copyXRef = gFalse);
+  void displayAnnot(Annot *annot, OutputDev *out, double hDPI, double vDPI,
+		   int rotate, GBool useMediaBox, GBool crop,
+			int sliceX, int sliceY, int sliceW, int sliceH,
+			GBool (*abortCheckCbk)(void *data),
+			void *abortCheckCbkData,
+                        GBool copyXRef = gFalse);
 
   void display(Gfx *gfx);
 
